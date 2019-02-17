@@ -4,6 +4,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
 import 'Home.dart';
 import 'Signup.dart';
+import '../Widgets/Loader.dart';
+import '../Modal/Authenication.dart';
+import '../Modal/User.dart';
+import '../Theme/CustomStyle.dart';
+import '../Widgets/CustomFlatButton.dart';
+import '../Widgets/CustomTextButton.dart';
+import '../Modal/Validation.dart';
 
 class Login extends StatefulWidget{
   @override
@@ -21,10 +28,13 @@ class LoginState extends State<Login>{
   final _formKey = GlobalKey<FormState>();
   bool loader = false;
 
+  Authentication _authentication;
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    _authentication = Authentication();
     emailCtrl = TextEditingController();
     passwordCtrl = TextEditingController();
     email = FocusNode();
@@ -33,57 +43,7 @@ class LoginState extends State<Login>{
   }
 
 
-  showToast(BuildContext context,String message){
-    Scaffold.of(context).showSnackBar(
-        new SnackBar(
-          content: new Text(message),
-        )
-    );
-  }
-
-  HandleError(e){
-    String errorType;
-    print("E ${e.message}");
-    if (Platform.isAndroid) {
-      switch (e.message) {
-        case 'There is no user record corresponding to this identifier. The user may have been deleted.':
-          errorType = "User not found";
-          break;
-        case 'The password is invalid or the user does not have a password.':
-          errorType = "Invalid username passowrd";
-          break;
-        case 'The email address is already in use by another account.':
-          errorType = "User already register";
-          break;
-        case 'A network error (such as timeout, interrupted connection or unreachable host) has occurred.':
-          errorType = "Time our";
-          break;
-      // ...
-        default:
-          print('Case ${e.message} is not jet implemented');
-      }
-    } else if (Platform.isIOS) {
-      switch (e.code) {
-        case 'Error 17011':
-          errorType = "User not found";
-          break;
-        case 'Error 17009':
-          errorType = "Invalid username password";
-          break;
-        case 'Error 17020':
-          errorType = "Network error";
-          break;
-      // ...
-        default:
-          print('Case ${e.message} is not jet implemented');
-      }
-    }
-    return errorType;
-
-  }
-
   userLogin(BuildContext context)async{
-
     setState(() {
       _autovalid = true;
     });
@@ -92,38 +52,19 @@ class LoginState extends State<Login>{
         setState(() {
           loader = true;
         });
-        User u = User(email: emailCtrl.value.text,password: passwordCtrl.value.text);
-
-        FirebaseUser user = await FirebaseAuth.instance.signInWithEmailAndPassword(email: u.email, password: u.password);
+        FirebaseUser user = await _authentication.LoginUser(user: User(email: emailCtrl.value.text,password: passwordCtrl.value.text));
         setState(() {
           loader = false;
         });
-        showToast(context, "Login successful");
-        Route route = MaterialPageRoute(builder: (context) => Home(user: user));
-        Navigator.pushReplacement(context, route);
-
+        _authentication.ShowToast(context, "Login successful");
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Home(user: user)));
       } on PlatformException catch(e){
-        showToast(context, HandleError(e));
+        _authentication.ShowToast(context, _authentication.HandleError(e));
         setState(() {
           loader = false;
         });
       }
     }
-  }
-
-  InputDecoration textField({String hintText,String labelText}){
-    return InputDecoration(
-        hintText: hintText,
-        labelText: labelText,
-        hintStyle: TextStyle(
-            letterSpacing: 1.3
-        ),
-        contentPadding: EdgeInsets.all(13.0), // Inside box padding
-        border: OutlineInputBorder(
-            gapPadding: 0.0,
-            borderRadius: BorderRadius.circular(1.5)
-        )
-    );
   }
 
   @override
@@ -141,12 +82,7 @@ class LoginState extends State<Login>{
 
   Widget LoadingWidget(bool flag){
     if(flag){
-      return Container(
-        color: Colors.black26,
-        child: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return Loader();
     }else{
       return Container();
     }
@@ -168,17 +104,13 @@ class LoginState extends State<Login>{
                   TextFormField(
                     textInputAction: TextInputAction.next,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: textField(
+                    decoration: TextFieldDecoration(
                         hintText: "Email",
                         labelText: "Email"
                     ),
                     controller: emailCtrl,
                     focusNode: email,
-                    validator: (value){
-                      if(value == null || value == ''){
-                        return "Enter email";
-                      }
-                    },
+                    validator: (value) => checkFieldValidation(value,'Email','email'),
                     onFieldSubmitted: (value){
                       email.unfocus();
                       FocusScope.of(context).requestFocus(passowrd);
@@ -190,46 +122,32 @@ class LoginState extends State<Login>{
                   TextFormField(
                     textInputAction: TextInputAction.done,
                     obscureText: true,
-                    decoration: textField(
+                    decoration: TextFieldDecoration(
                         hintText: "Password",
                         labelText: "Password"
                     ),
                     controller: passwordCtrl,
                     focusNode: passowrd,
-                    validator: (value){
-                      if(value == null || value == ''){
-                        return "Enter password";
-                      }
-                    },
+                    validator: (value) => checkFieldValidation(value,'Passowrd','password'),
                     onFieldSubmitted: (value){
                       passowrd.unfocus();
                       userLogin(context);
                     },
                   ),
                   SizedBox(height: 10.0,),
-                  FlatButton(
-                    color: Colors.blue,
+                  CustonFlatButton(
+                    title: "Login",
                     onPressed: (){
                       email.unfocus();
                       passowrd.unfocus();
                       userLogin(context);
                     },
-                    child: Container(
-                      height: 40.0,
-                      width: double.infinity,
-                      alignment: Alignment.center,
-                      child: Text("Login",style: TextStyle(color: Colors.white),),
-                    ),
                   ),
-                  Container(
-                    margin: EdgeInsets.only(top: 10.0,bottom: 5.0),
-                    alignment: Alignment.centerRight,
-                    child: InkResponse(
-                      onTap: (){
-                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>Signup()));
-                      },
-                      child:  Text("Create new account"),
-                    ),
+                  CustomTextButton(
+                    title:"Create new account",
+                    onTap: (){
+                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>Signup()));
+                    },
                   )
                 ],
               ),
@@ -239,10 +157,3 @@ class LoginState extends State<Login>{
     );
   }
 }
-
-class User{
-  String email;
-  String password;
-  User({this.email,this.password});
-}
-
