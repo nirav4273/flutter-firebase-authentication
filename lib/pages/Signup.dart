@@ -62,8 +62,11 @@ class SignupState extends State<Signup>{
           loader = false;
         });
         _formKey.currentState.reset();
-
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=> Home(user: user,)));
+        Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context)=>Home(user: user)),
+            ModalRoute.withName("/root")
+        );
         _authentication.ShowToast(context, "User signup successfully");
 
       } on PlatformException catch(e){
@@ -117,7 +120,11 @@ class SignupState extends State<Signup>{
                     hintText: "Email",
                     labelText: "Email"
                 ),
-                validator: (value) => checkFieldValidation(value,'Email','email'),
+                validator: (value) => checkFieldValidation(
+                    val: value,
+                    fieldName: "Email",
+                    fieldType: VALIDATION_TYPE.EMAIL
+                ),
               ),
               SizedBox(height: 10.0,),
               TextFormField(
@@ -132,7 +139,11 @@ class SignupState extends State<Signup>{
                   password.unfocus();
                   userSingup(context);
                 },
-                validator: (value) => checkFieldValidation(value,'Passowrd','password'),
+                validator: (value) => checkFieldValidation(
+                    val: value,
+                    fieldName: "Password",
+                    fieldType: VALIDATION_TYPE.PASSWORD
+                ),
               ),
               SizedBox(height: 10.0,),
               CustonFlatButton(

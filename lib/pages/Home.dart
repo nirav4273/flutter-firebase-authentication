@@ -21,7 +21,12 @@ class HomeState extends State<Home>{
   logout()async{
     try{
       await FirebaseAuth.instance.signOut();
-      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=>Login()), (Route<dynamic> route)=>  route.isFirst);
+
+      Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context)=>Login()),
+              ModalRoute.withName("/root")
+      );
     }catch(e){
       print(e);
     }

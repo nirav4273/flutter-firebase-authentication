@@ -57,7 +57,12 @@ class LoginState extends State<Login>{
           loader = false;
         });
         _authentication.ShowToast(context, "Login successful");
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Home(user: user)));
+        Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context)=>Home(user: user)),
+            ModalRoute.withName("/root")
+        );
+
       } on PlatformException catch(e){
         _authentication.ShowToast(context, _authentication.HandleError(e));
         setState(() {
@@ -110,7 +115,11 @@ class LoginState extends State<Login>{
                     ),
                     controller: emailCtrl,
                     focusNode: email,
-                    validator: (value) => checkFieldValidation(value,'Email','email'),
+                    validator: (value) => checkFieldValidation(
+                      val: value,
+                      fieldName: "Email",
+                      fieldType: VALIDATION_TYPE.EMAIL
+                    ),
                     onFieldSubmitted: (value){
                       email.unfocus();
                       FocusScope.of(context).requestFocus(passowrd);
@@ -128,7 +137,11 @@ class LoginState extends State<Login>{
                     ),
                     controller: passwordCtrl,
                     focusNode: passowrd,
-                    validator: (value) => checkFieldValidation(value,'Passowrd','password'),
+                    validator: (value) => checkFieldValidation(
+                        val: value,
+                        fieldName: "Password",
+                        fieldType: VALIDATION_TYPE.PASSWORD
+                    ),
                     onFieldSubmitted: (value){
                       passowrd.unfocus();
                       userLogin(context);
